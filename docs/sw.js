@@ -1,5 +1,5 @@
 // Make It Pop service worker: the game works offline once it has loaded once.
-const VERSION = '0c25b817';
+const VERSION = '98b16fcc';
 const CACHE = `mip-${VERSION}`;
 const FONTS = 'mip-fonts';
 const SHELL = [

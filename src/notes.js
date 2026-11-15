@@ -1,5 +1,6 @@
 // Client Notes: trick puzzles. Every level is a real client note, solved literally.
 import { C, balloonSvg, catSvg, itemSvg, markPaths } from './art.js';
+import { gameHead } from './shared.js';
 
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 const inside = (ev, r) => ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
@@ -421,77 +422,91 @@ export const NOTES = [
   },
 ];
 
-// ---------- the Notes screen ----------
+// ---------- Feedback: the game screen ----------
 let cur = null;
 let cleanup = null;
 
 const markup = (s) => s.replace(/\[(\w+)\]/g, '<span class="w" data-w="$1">$1</span>');
 
-export function renderNotes(root, ctx) {
-  const solved = ctx.solved;
-  const unlocked = (i) => i === 0 || solved.includes(NOTES[i - 1].id);
-  if (cur === null || !unlocked(cur)) {
-    const f = NOTES.findIndex((n, i) => unlocked(i) && !solved.includes(n.id));
-    cur = f >= 0 ? f : NOTES.length - 1;
-  }
-  cleanup?.();
-  cleanup = null;
-  const n = NOTES[cur];
-  root.innerHTML = `<div class="notes">
-    <div class="nhead"><h2>Client notes</h2><p>Do exactly what the client says. Literally.</p></div>
-    <div class="nlevels">${NOTES.map((x, i) => `<button class="lvl${solved.includes(x.id) ? ' done' : ''}${i === cur ? ' on' : ''}" data-n="${i}" ${unlocked(i) ? '' : 'disabled'}>${i + 1}</button>`).join('')}</div>
-    <div class="ncard">
-      <div class="nfrom">From: client · Note ${cur + 1} of ${NOTES.length}</div>
-      <div class="nprompt">${markup(n.note)}</div>
-      <div class="nstage"></div>
-      <div class="nmsg" aria-live="polite"></div>
-      <div class="nbtns"><button class="pill sm" data-act="hint">¿Ubicás?</button><button class="pill sm" data-act="reset">Start over</button></div>
-      <div class="nwin" hidden></div>
-    </div>
-  </div>`;
-  const card = root.querySelector('.ncard'), stage = root.querySelector('.nstage');
-  const msg = root.querySelector('.nmsg'), win = root.querySelector('.nwin');
-  let done = false;
-  const api = {
-    prompt: root.querySelector('.nprompt'),
-    isDone: () => done,
-    sfx: ctx.sfx,
-    nope(text) {
-      msg.textContent = text;
-      msg.className = 'nmsg';
-      card.classList.remove('nope');
-      void card.offsetWidth;
-      card.classList.add('nope');
-      ctx.buzz(10);
-    },
-    solve() {
-      if (done) return;
-      done = true;
-      const first = !solved.includes(n.id);
-      ctx.solve(n.id);
-      ctx.buzz(25);
-      const next = cur + 1 < NOTES.length;
-      setTimeout(() => {
-        win.innerHTML = `<b>Solved.</b><p>${n.done}</p>${first ? '<small>+10 mate · +$40 · +1 AHRE</small>' : ''}
-          ${next ? '<button class="pill go" data-act="next">Next note</button>' : "<p class=\"fin\">That's every note. More when clients send more. Ahre.</p>"}`;
-        win.hidden = false;
-        root.querySelectorAll('.lvl').forEach((b, i) => {
-          b.classList.toggle('done', solved.includes(NOTES[i].id));
-          b.disabled = !unlocked(i);
-        });
-      }, 650);
-    },
+// ctx: { solved() → ids, solve(id), sfx, buzz }
+export function Feedback(root, ctx) {
+  root.classList.add('fb');
+  const draw = () => {
+    const solved = ctx.solved();
+    const unlocked = (i) => i === 0 || solved.includes(NOTES[i - 1].id);
+    if (cur === null || !unlocked(cur)) {
+      const f = NOTES.findIndex((n, i) => unlocked(i) && !solved.includes(n.id));
+      cur = f >= 0 ? f : NOTES.length - 1;
+    }
+    cleanup?.();
+    cleanup = null;
+    const n = NOTES[cur];
+    root.innerHTML = `${gameHead('Feedback', `<span class="gpill">${solved.length}/${NOTES.length}</span>`)}
+    <div class="notes">
+      <p class="nsub">Do exactly what the client says. Literally.</p>
+      <div class="nlevels">${NOTES.map((x, i) => `<button class="lvl${solved.includes(x.id) ? ' done' : ''}${i === cur ? ' on' : ''}" data-n="${i}" ${unlocked(i) ? '' : 'disabled'}>${i + 1}</button>`).join('')}</div>
+      <div class="ncard">
+        <div class="nfrom">From: client · Note ${cur + 1} of ${NOTES.length}</div>
+        <div class="nprompt">${markup(n.note)}</div>
+        <div class="nstage"></div>
+        <div class="nmsg" aria-live="polite"></div>
+        <div class="nbtns"><button class="pill sm" data-act="hint">¿Ubicás?</button><button class="pill sm" data-act="reset">Start over</button></div>
+        <div class="nwin" hidden></div>
+      </div>
+    </div>`;
+    const card = root.querySelector('.ncard'), stage = root.querySelector('.nstage');
+    const msg = root.querySelector('.nmsg'), win = root.querySelector('.nwin');
+    let done = false;
+    const api = {
+      prompt: root.querySelector('.nprompt'),
+      isDone: () => done,
+      sfx: ctx.sfx,
+      nope(text) {
+        msg.textContent = text;
+        msg.className = 'nmsg';
+        card.classList.remove('nope');
+        void card.offsetWidth;
+        card.classList.add('nope');
+        ctx.buzz(10);
+      },
+      solve() {
+        if (done) return;
+        done = true;
+        const first = !solved.includes(n.id);
+        ctx.solve(n.id);
+        ctx.buzz(25);
+        const now = ctx.solved();
+        const next = cur + 1 < NOTES.length;
+        setTimeout(() => {
+          win.innerHTML = `<b>Solved.</b><p>${n.done}</p>${first ? '<small>+10 mate, +$40 and +1 AHRE in Make It Pop</small>' : ''}
+            ${next ? '<button class="pill go" data-act="next">Next note</button>' : "<p class=\"fin\">That's every note. More when clients send more. Ahre.</p>"}`;
+          win.hidden = false;
+          const gp = root.querySelector('.gpill');
+          if (gp) gp.textContent = `${now.length}/${NOTES.length}`;
+          root.querySelectorAll('.lvl').forEach((b, i) => {
+            b.classList.toggle('done', now.includes(NOTES[i].id));
+            b.disabled = !(i === 0 || now.includes(NOTES[i - 1].id));
+          });
+        }, 650);
+      },
+    };
+    stage.className = `nstage n-${n.id}`;
+    cleanup = n.mount(stage, api) || null;
   };
-  root.onclick = (e) => {
+  root.addEventListener('click', (e) => {
     const lv = e.target.closest('.lvl');
-    if (lv && !lv.disabled) { cur = +lv.dataset.n; renderNotes(root, ctx); return; }
+    if (lv && !lv.disabled) { cur = +lv.dataset.n; draw(); return; }
     const a = e.target.closest('[data-act]');
     if (!a) return;
+    const n = NOTES[cur];
+    const msg = root.querySelector('.nmsg');
     if (a.dataset.act === 'hint') { msg.textContent = `Daphi: ${n.hint}`; msg.className = 'nmsg hint'; }
-    if (a.dataset.act === 'reset') renderNotes(root, ctx);
-    if (a.dataset.act === 'next') { cur = Math.min(NOTES.length - 1, cur + 1); renderNotes(root, ctx); }
+    if (a.dataset.act === 'reset') draw();
+    if (a.dataset.act === 'next') { cur = Math.min(NOTES.length - 1, cur + 1); draw(); }
+  });
+  return {
+    show() { draw(); },
+    hide() { cleanup?.(); cleanup = null; root.innerHTML = ''; },
+    status() { const s = ctx.solved().length; return s >= NOTES.length ? 'Done' : s ? `${s}/${NOTES.length}` : 'New'; },
   };
-  stage.className = `nstage n-${n.id}`;
-  stage.style.background = '';
-  cleanup = n.mount(stage, api) || null;
 }
