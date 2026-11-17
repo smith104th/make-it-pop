@@ -1,7 +1,5 @@
 // Ademan Games: the menu, and the games that slide in over it (same idea as Bolsillo's Games tab).
 import { $, load, store, sfx, buzz, settings, saveSettings, esc } from './shared.js';
-import { daphiSvg } from './art.js';
-import { line } from './daphi.js';
 import { Final } from './final.js';
 import { Feedback, NOTES } from './notes.js';
 import { Scope } from './scope.js';
@@ -9,20 +7,14 @@ import { Swatch } from './swatch.js';
 import { Pop, legacySolved } from './pop.js';
 
 const GAMES = [
-  { id: 'final', name: 'Final Final', sub: '2048, but every tile is a file name.' },
-  { id: 'feedback', name: 'Feedback', sub: 'Do exactly what the client says.' },
-  { id: 'scope', name: 'Scope Creep', sub: 'Eat every request. Mind the deadline.' },
-  { id: 'swatch', name: 'Swatch', sub: 'Remember that blue from the meeting.' },
-  { id: 'pop', name: 'Make It Pop', sub: 'Run the studio. Survive the feedback.' },
-];
-const HUB_LINES = [
-  'These are the ones I play between calls. Ahre.',
-  'Five minutes. Then back to work, ¿ubicás?',
-  'Research. Strictly research. Ahre.',
-  'Beat my Swatch score. I dare you.',
+  { id: 'final', name: 'Final Final', sub: '2048 with file names, from draft to Approved.' },
+  { id: 'feedback', name: 'Feedback', sub: 'Ten puzzles based on client notes.' },
+  { id: 'scope', name: 'Scope Creep', sub: 'Snake. Eat requests, avoid the walls.' },
+  { id: 'swatch', name: 'Swatch', sub: 'Recreate a color from memory. Daily.' },
+  { id: 'pop', name: 'Make It Pop', sub: 'Merge work and deliver client orders.' },
 ];
 
-// Feedback progress lives on its own now (it used to be the Notes tab inside Make It Pop).
+// Feedback progress lives on its own (it used to be the Notes tab inside Make It Pop).
 const FB = 'ag:feedback';
 const fb = load(FB, null) || { solved: legacySolved() };
 store(FB, fb);
@@ -60,7 +52,6 @@ const hub = $('#hub');
 function renderHub() {
   hub.innerHTML = `<div class="hub-scroll">
     <header class="hub-head"><small>ADEMAN STUDIO · ${GAMES.length} GAMES</small><h1>Ademan<br>Games</h1></header>
-    <div class="daphi hub-daphi"><button class="av" type="button" aria-label="Daphi">${daphiSvg}</button><div class="bubble"><small>DAPHI</small><p>${esc(hubLine)}</p></div></div>
     <nav class="bands">${GAMES.map((g) => `
       <button class="band" type="button" data-g="${g.id}">
         <span class="band-txt"><b>${g.name}</b><small>${g.sub}</small></span>
@@ -69,23 +60,13 @@ function renderHub() {
     </nav>
     <footer class="credit">
       <img src="wordmark.png" alt="ademan" width="720" height="149">
-      <p>Games for between calls. Made by Ademan Studio, for Daphi.</p>
       <div class="credit-row"><a href="https://byademan.com" target="_blank" rel="noopener">byademan.com</a><button type="button" class="sound">Sound ${settings.sound ? 'on' : 'off'}</button></div>
     </footer>
   </div>`;
 }
-let hubLine = HUB_LINES[0];
 hub.addEventListener('click', (e) => {
   const b = e.target.closest('.band');
   if (b) { buzz(8); sfx(480, 0.06); entered = true; location.hash = b.dataset.g; return; }
-  if (e.target.closest('.av')) {
-    hubLine = Math.random() < 0.5 ? HUB_LINES[Math.floor(Math.random() * HUB_LINES.length)] : line('idle');
-    const p = hub.querySelector('.hub-daphi p');
-    p.textContent = hubLine;
-    const bub = hub.querySelector('.hub-daphi .bubble');
-    bub.classList.remove('talk'); void bub.offsetWidth; bub.classList.add('talk');
-    sfx(620, 0.06);
-  }
   if (e.target.closest('.sound')) { settings.sound = !settings.sound; saveSettings(); renderHub(); }
 });
 

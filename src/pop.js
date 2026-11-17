@@ -1,6 +1,5 @@
-// Make It Pop: the merge desk. Briefs, clients, feedback stickies, AHRE.
-import { C, CHAINS, maxLevel, itemName, itemSvg, tileHTML, genHTML, mateIcon, daphiSvg } from './art.js';
-import { line } from './daphi.js';
+// Make It Pop: the merge desk. Briefs, clients, client-note stickies.
+import { C, CHAINS, maxLevel, itemName, itemSvg, tileHTML, genHTML, daphiSvg } from './art.js';
 import { makeOrder, firstOrder, unlockedChains, xpNeed } from './clients.js';
 import { $, rnd, esc, sfx, buzz, sheet, gameHead, settings, saveSettings, shareText, SITE } from './shared.js';
 
@@ -8,12 +7,11 @@ const COLS = 7;
 const N = 49;
 const GEN = 24; // the Brief generator sits in the middle of the desk
 const KEY = 'make-it-pop:v1';
-const MATE_BASE = 30;
 const ROOMS = [
   { id: 'riso', name: 'Riso room', lvl: 3, cost: 150, perk: 'Briefs sometimes print two.' },
-  { id: 'photo', name: 'Photo set', lvl: 4, cost: 250, perk: '+10 max mate.' },
+  { id: 'photo', name: 'Photo set', lvl: 4, cost: 250, perk: 'Briefs print level 2 work more often.' },
   { id: 'lab', name: 'Packaging lab', lvl: 6, cost: 400, perk: 'Clients pay 25% more.' },
-  { id: 'stop', name: 'Stop-motion corner', lvl: 8, cost: 600, perk: 'Mate refills faster.' },
+  { id: 'stop', name: 'Stop-motion corner', lvl: 8, cost: 600, perk: 'Client notes land less often.' },
 ];
 const STICKIES = [
   'make it pop', 'can we try it in blue?', 'logo bigger pls', 'my nephew has Canva', 'love it! small tweaks',
@@ -30,7 +28,7 @@ function fresh() {
   board[GEN + 1] = { c: 'type', l: 1 };
   board[GEN - COLS] = { c: 'files', l: 1 };
   const s = {
-    v: 1, board, stickies: {}, mate: MATE_BASE, mateAt: Date.now(), coins: 20, xp: 0, level: 1, ahre: 2,
+    v: 1, board, stickies: {}, coins: 20, xp: 0, level: 1,
     orders: [], wall: [], wallView: 'grid', rooms: {}, intro: false,
     stats: { merges: 0, launches: 0, cleared: 0, spawns: 0 }, sinceSticky: 0, nextSticky: 8,
   };
@@ -66,35 +64,25 @@ const neighbors = (i) => {
   const [r, c] = rc(i);
   return [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].filter(([y, x]) => y >= 0 && y < 7 && x >= 0 && x < COLS).map(([y, x]) => y * COLS + x);
 };
-const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
-// ---------- mate ----------
-const mateMax = () => MATE_BASE + (S.rooms.photo ? 10 : 0);
-const regenMs = () => (S.rooms.stop ? 45_000 : 75_000);
-function tickMate() {
-  const now = Date.now();
-  if (S.mate >= mateMax()) { S.mateAt = now; return; }
-  const n = Math.floor((now - S.mateAt) / regenMs());
-  if (n > 0) {
-    S.mate = Math.min(mateMax(), S.mate + n);
-    S.mateAt += n * regenMs();
-    if (S.mate >= mateMax()) S.mateAt = now;
-  }
-}
-const nextMateIn = () => (S.mate >= mateMax() ? 0 : regenMs() - (Date.now() - S.mateAt));
-
-// ---------- Daphi ----------
-let sayTimer;
-function say(key, text) {
+// ---------- status line (Daphi's bubble) ----------
+const MSG = {
+  start: 'Tap Brief for new work.',
+  full: 'The desk is full. Merge or archive something.',
+  sticky: 'New client note on the desk.',
+  locked: 'That tile has a client note on it. Merge right next to it.',
+  cleared: 'Client note resolved.',
+  max: 'Max level.',
+  archive: 'Archived.',
+};
+function say(text) {
   const p = $('#daphi p');
   if (!p) return;
-  p.textContent = text || line(key);
+  p.textContent = MSG[text] || text;
   const b = $('#daphi .bubble');
   b.classList.remove('talk');
   void b.offsetWidth;
   b.classList.add('talk');
-  clearTimeout(sayTimer);
-  sayTimer = setTimeout(() => { p.textContent = line('idle'); }, 14000);
 }
 
 // ---------- game actions ----------
@@ -115,13 +103,9 @@ function pickChain() {
   return ks[0];
 }
 function spawn() {
-  tickMate();
-  if (S.mate <= 0) { say('noMate'); mateSheet(); return; }
   const target = nearestEmpty(GEN);
   if (target < 0) { say('full'); shake(GEN); return; }
-  if (S.mate >= mateMax()) S.mateAt = Date.now();
-  S.mate--;
-  S.board[target] = { c: pickChain(), l: Math.random() < 0.08 ? 2 : 1 };
+  S.board[target] = { c: pickChain(), l: Math.random() < (S.rooms.photo ? 0.25 : 0.08) ? 2 : 1 };
   S.stats.spawns++;
   anim.spawn = [target];
   if (S.rooms.riso && Math.random() < 0.15) {
@@ -146,7 +130,7 @@ function maybeSticky() {
   const idx = rnd(occ.length && Math.random() < 0.7 ? occ : cand);
   S.stickies[idx] = { t: rnd(STICKIES), hp: S.level >= 3 && Math.random() < 0.4 ? 2 : 1 };
   S.sinceSticky = 0;
-  S.nextSticky = 6 + Math.floor(Math.random() * 5);
+  S.nextSticky = 6 + Math.floor(Math.random() * 5) + (S.rooms.stop ? 4 : 0);
   anim.sticky = idx;
   if (sel === idx) sel = -1;
   say('sticky');
@@ -179,10 +163,8 @@ function merge(src, dst, a) {
   sfx(280 + nl * 90, 0.18);
   buzz(12);
   burst(dst);
-  if (cleared) say('stickyClear');
+  if (cleared) say('cleared');
   else if (nl === maxLevel(a.c)) say('max');
-  else if (nl >= 4 && Math.random() < 0.6) say('bigMerge');
-  else if (Math.random() < 0.2) say('merge');
 }
 function readyCells(o) {
   const used = new Set();
@@ -202,16 +184,14 @@ function deliver(oi) {
   cells.forEach((i) => { S.board[i] = null; if (sel === i) sel = -1; });
   S.coins += o.coins;
   S.xp += o.xp;
-  S.mate += 2;
   S.stats.launches++;
   S.wall.unshift({ ...o.client, needs: o.needs, at: Date.now() });
   if (S.wall.length > 200) S.wall.length = 200;
-  if (S.stats.launches % 3 === 0) S.ahre = Math.min(3, S.ahre + 1);
   S.orders[oi] = makeOrder(S);
   sfx(660, 0.2);
   setTimeout(() => sfx(880, 0.2), 90);
   buzz(20);
-  say('deliver');
+  say(`Delivered to ${o.client.name}. +$${o.coins}.`);
   levelCheck();
   save();
   render();
@@ -223,28 +203,9 @@ function levelCheck() {
   const news = [];
   for (const k of Object.keys(CHAINS)) if (CHAINS[k].unlock === S.level) news.push(`New work type: <b>${CHAINS[k].name}</b>. Briefs can now print it.`);
   for (const r of ROOMS) if (r.lvl === S.level) news.push(`<b>${r.name}</b> can be built in the Studio tab.`);
-  if (!news.length) news.push('Clients now ask for bigger things. Ahre.');
-  say('levelUp');
+  if (!news.length) news.push('Clients now ask for bigger things.');
+  say(`Studio level ${S.level}.`);
   sheet({ title: `Studio level ${S.level}`, body: news.map((n) => `<p>${n}</p>`).join(''), actions: [{ label: 'Back to work', primary: true }] });
-}
-function useAhre() {
-  const ids = Object.keys(S.stickies);
-  if (!ids.length) { say('noStickies'); return; }
-  if (S.ahre <= 0) { say('noAhre'); return; }
-  S.ahre--;
-  S.stats.cleared += ids.length;
-  anim.hit = ids.map(Number);
-  S.stickies = {};
-  const fx = document.createElement('div');
-  fx.className = 'ahre-fx';
-  fx.textContent = 'AHRE';
-  document.body.append(fx);
-  setTimeout(() => fx.remove(), 1100);
-  sfx(200, 0.35);
-  buzz(30);
-  say('ahre');
-  save();
-  render();
 }
 function archive(i) {
   const it = S.board[i];
@@ -254,7 +215,7 @@ function archive(i) {
   S.board[i] = null;
   S.coins += v;
   sel = -1;
-  if (Math.random() < 0.5) say('archive');
+  say('archive');
   sfx(240, 0.1);
   save();
   render();
@@ -264,7 +225,7 @@ function buildRoom(id) {
   if (!r || S.rooms[id] || S.level < r.lvl || S.coins < r.cost) return;
   S.coins -= r.cost;
   S.rooms[id] = true;
-  say('room');
+  say(`${r.name} built.`);
   sfx(700, 0.25);
   save();
   render();
@@ -273,13 +234,7 @@ function buildRoom(id) {
 // ---------- rendering ----------
 const cellEl = (i) => $(`#board .cell[data-i="${i}"]`);
 function renderTop() {
-  tickMate();
-  const full = S.mate >= mateMax();
-  $('#mate').innerHTML = `${mateIcon}<b>${S.mate}</b><small>${full ? 'full' : fmt(nextMateIn())}</small>`;
   $('#coins').innerHTML = `<b>$${S.coins}</b>`;
-  $('#ahre').innerHTML = `AHRE <b>×${S.ahre}</b>`;
-  $('#ahre').classList.toggle('dim', S.ahre <= 0);
-  $('#ahre').classList.toggle('hot', S.ahre > 0 && Object.keys(S.stickies).length > 0);
 }
 function needsHTML(o) {
   const have = {};
@@ -313,7 +268,7 @@ function renderBoard() {
     if (sel === i) cls += ' sel';
     if (st) cls += ' locked';
     let inner = '';
-    if (i === GEN) inner = genHTML(S.mate > 0 ? 'live' : 'empty');
+    if (i === GEN) inner = genHTML('live');
     else if (it) inner = tileHTML(it, anim.merge === i ? 'pop' : anim.spawn.includes(i) ? 'in' : '');
     if (st) inner += stickyHTML(st, i);
     else if (anim.hit.includes(i)) inner += '<div class="sticky peel"> </div>';
@@ -325,12 +280,12 @@ function renderBoard() {
 function renderInspector() {
   const el = $('#inspector');
   if (sel === GEN) {
-    el.innerHTML = `<div class="ins-art gen-mini">${genHTML()}</div><div class="ins-txt"><b>Brief</b><small>Tap for new work. Costs 1 mate.</small></div>`;
+    el.innerHTML = `<div class="ins-art gen-mini">${genHTML()}</div><div class="ins-txt"><b>Brief</b><small>Tap for new work.</small></div>`;
     return;
   }
   const st = S.stickies[sel];
   if (st) {
-    el.innerHTML = `<div class="ins-txt"><b>Client note: "${esc(st.t)}"</b><small>Merge right next to it to resolve${st.hp > 1 ? ` (${st.hp} merges)` : ''}. Or AHRE.</small></div>`;
+    el.innerHTML = `<div class="ins-txt"><b>Client note: "${esc(st.t)}"</b><small>Merge right next to it to resolve it${st.hp > 1 ? ` (${st.hp} merges)` : ''}.</small></div>`;
     return;
   }
   const it = S.board[sel];
@@ -442,18 +397,6 @@ function shake(i) {
   void el.offsetWidth;
   el.classList.add('shake');
 }
-function mateSheet() {
-  const can = S.coins >= 30;
-  sheet({
-    title: 'Out of mate',
-    body: `<p>Next refill in ${fmt(nextMateIn())}. Mate refills on its own, one every ${Math.round(regenMs() / 1000)} seconds.</p><p>Or send someone to refill the thermos.</p>`,
-    actions: [
-      { label: can ? 'Refill thermos: +15 for $30' : 'Refill thermos: need $30', primary: can, fn: () => { if (S.coins < 30) return; S.coins -= 30; S.mate += 15; sfx(500, 0.2); save(); render(); } },
-      { label: 'Wait' },
-    ],
-  });
-}
-
 // ---------- board input: tap and drag ----------
 let drag = null;
 function tap(i) {
@@ -543,14 +486,11 @@ function fit() {
 // ---------- the game ----------
 export function Pop(root, context) {
   ctx = { ...ctx, ...context };
-  root.innerHTML = `${gameHead('', `
-      <button id="mate" class="pill res" type="button" aria-label="Mate"></button>
-      <span id="coins" class="pill res" aria-label="Money"></span>
-      <button id="ahre" class="pill res" type="button" aria-label="AHRE: clear all client notes"></button>`)}
+  root.innerHTML = `${gameHead('Make It Pop', '<span id="coins" class="pill res" aria-label="Money"></span>')}
     <main class="pop-main">
       <section id="pop-desk" class="pop-screen on" aria-label="Desk">
         <div id="orders" class="orders"></div>
-        <div id="daphi" class="daphi"><button class="av" type="button" aria-label="Daphi">${daphiSvg}</button><div class="bubble"><small>DAPHI</small><p></p></div></div>
+        <div id="daphi" class="daphi"><span class="av" aria-hidden="true">${daphiSvg}</span><div class="bubble"><small>DAPHI</small><p></p></div></div>
         <div id="boardwrap"><div id="board" class="board"></div></div>
         <div id="inspector" class="inspector"></div>
       </section>
@@ -566,13 +506,6 @@ export function Pop(root, context) {
   bindBoard();
   $('#orders').addEventListener('click', (e) => { const b = e.target.closest('.deliver'); if (b) deliver(+b.dataset.o); });
   $('#inspector').addEventListener('click', (e) => { if (e.target.closest('#archive') && sel >= 0) archive(sel); });
-  $('#ahre').addEventListener('click', useAhre);
-  $('#mate').addEventListener('click', () => {
-    tickMate();
-    if (S.mate <= 0) mateSheet();
-    else say(null, S.mate >= mateMax() ? 'Thermos is full. Go make briefs. Ahre.' : `${S.mate} mates left. Next one in ${fmt(nextMateIn())}.`);
-  });
-  $('#daphi .av').addEventListener('click', () => { say('idle'); sfx(620, 0.06); });
   $('#pop-dock').addEventListener('click', (e) => { const b = e.target.closest('button[data-t]'); if (b) go(b.dataset.t); });
   $('#pop-studio').addEventListener('click', (e) => {
     const r = e.target.closest('[data-room]');
@@ -588,39 +521,32 @@ export function Pop(root, context) {
   $('#pop-wall').addEventListener('click', (e) => {
     const v = e.target.closest('[data-view]');
     if (v) { S.wallView = v.dataset.view; save(); renderWall(); }
-    if (e.target.closest('#share')) shareText(`I launched ${S.stats.launches} brands and survived ${S.stats.cleared} rounds of client feedback in Make It Pop, a game by Ademan Studio.`, SITE);
+    if (e.target.closest('#share')) shareText(`Make It Pop: ${S.stats.launches} brands launched.`, `${SITE}#pop`);
   });
   window.addEventListener('resize', fit);
   if (window.ResizeObserver) new ResizeObserver(fit).observe($('#boardwrap'));
-  let timer = 0;
-
   return {
     show() {
       render();
       fit();
       say('start');
-      clearInterval(timer);
-      timer = setInterval(() => { if (!drag) renderTop(); }, 1000);
       if (!S.intro) {
         S.intro = true;
         save();
         sheet({
           title: 'Make It Pop',
-          body: `<p>Run the studio. Merge the work, deliver to clients, survive the feedback.</p>
-            <ul><li>Tap <b>Brief</b> for new work. Costs 1 mate.</li><li>Drag two of the same together to merge them up.</li><li>Deliver what clients ask for, up top.</li><li>Client feedback lands as sticky notes and locks tiles. Merge next to them, or hit <b>AHRE</b>.</li></ul>`,
-          actions: [{ label: 'Make it pop', primary: true }],
+          body: `<ul><li>Tap <b>Brief</b> for new work.</li><li>Drag two of the same together to merge them up.</li><li>Deliver what clients ask for, up top.</li><li>Client notes land on the desk and lock tiles. Merge right next to one to clear it.</li></ul>`,
+          actions: [{ label: 'Start', primary: true }],
         });
       }
     },
-    hide() { clearInterval(timer); save(); },
+    hide() { save(); },
     pause() { save(); },
     resume() { render(); },
     status() { return S.stats.launches ? `Level ${S.level}` : 'New'; },
-    // Feedback pays out here: mate, money and an AHRE.
+    // each solved Feedback puzzle pays $40 here
     reward() {
-      S.mate += 10;
       S.coins += 40;
-      S.ahre = Math.min(3, S.ahre + 1);
       save();
     },
   };

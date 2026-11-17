@@ -65,7 +65,7 @@ function roundsFor(r) {
   for (let i = 0; i < ROUNDS; i++) out.push({ t: [Math.round(r() * 360), Math.round(25 + r() * 70), Math.round(35 + r() * 60)], q: QUOTES[Math.floor(r() * QUOTES.length)] });
   return out;
 }
-const comment = (sc) => (sc >= 9 ? 'Basically Pantone. Ahre.' : sc >= 7.5 ? "The client won't notice." : sc >= 5.5 ? 'Close-ish. ¿Ubicás?' : sc >= 3 ? "That's a different brand." : 'Ahre. No.');
+const comment = (sc) => (sc >= 9 ? 'Exact.' : sc >= 7.5 ? 'Very close.' : sc >= 5.5 ? 'Close.' : sc >= 3 ? 'Off.' : 'Way off.');
 const splitMark = (a, b, size = 40) => `<svg viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">${markPaths(20, 20, 19, a, b)}</svg>`;
 
 export function Swatch(root) {
@@ -153,7 +153,7 @@ export function Swatch(root) {
     bodyEl.innerHTML = `<div class="sw-res">
       <div class="sw-split"><div style="background:${css(r.t)}"><small>Theirs</small></div><div style="background:${css(pick)}"><small>Yours</small></div></div>
       <b class="sw-score">${sc.toFixed(1)}</b>
-      <p class="sw-com">Daphi: ${comment(sc)}</p>
+      <p class="sw-com">${comment(sc)}</p>
       <button class="pill go" data-a="next">${i + 1 < ROUNDS ? 'Next color' : 'See the total'}</button>
     </div>`;
   }
@@ -169,7 +169,7 @@ export function Swatch(root) {
       <small>${mode === 'daily' ? 'TODAY' : 'PRACTICE'}</small>
       <b>${t}<span>/50</span></b>
       <div class="sw-row">${results.map((r) => `<div>${splitMark(css(r.t), css(r.p), 46)}<i>${r.sc.toFixed(1)}</i></div>`).join('')}</div>
-      <p>${newBest ? 'New best. ' : ''}Daphi: ${comment(t / 5)}</p>
+      ${newBest ? '<p>New best.</p>' : ''}
       <div class="sw-btns">${mode === 'daily' ? '<button class="pill go" data-a="share">Share</button>' : ''}<button class="pill${mode === 'daily' ? '' : ' go'}" data-a="practice">Practice round</button><button class="pill" data-a="home">Done</button></div>
     </div>`;
   }
@@ -180,7 +180,7 @@ export function Swatch(root) {
     if (a === 'send') send();
     if (a === 'next') { i++; if (i < ROUNDS) show(); else end(); }
     if (a === 'home') intro();
-    if (a === 'share' && data.daily) shareText(`Swatch ${data.daily.date}: ${data.daily.score}/50. Can you remember a color for three seconds? A game by Ademan Studio.`, `${SITE}#swatch`);
+    if (a === 'share' && data.daily) shareText(`Swatch ${data.daily.date}: ${data.daily.score}/50.`, `${SITE}#swatch`);
   });
 
   intro();

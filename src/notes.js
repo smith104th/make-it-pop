@@ -59,7 +59,7 @@ export const NOTES = [
   {
     id: 'pop',
     note: 'Make it pop.',
-    hint: 'Not everything is on top. Look behind the logo, ¿ubicás?',
+    hint: 'Not everything is on top. Look behind the logo.',
     done: 'It popped. The client is obsessed.',
     mount(st, api) {
       st.innerHTML = `<div class="n-balloon">${balloonSvg}</div>${logo('n1-logo')}`;
@@ -80,7 +80,7 @@ export const NOTES = [
   {
     id: 'bigger',
     note: 'Make the logo bigger.',
-    hint: 'Who said the slider stops at 100%? Keep pulling, ¿ubicás?',
+    hint: 'Who said the slider stops at 100%? Keep pulling.',
     done: "It's a billboard now. They love it.",
     mount(st, api) {
       st.innerHTML = `${logo('n2-logo')}<div class="n2-read">100%</div><div class="n2-track"><i class="n2-fill"></i><b class="n2-knob"></b></div><div class="n2-labels"><span>50%</span><span>100%</span></div>`;
@@ -127,7 +127,7 @@ export const NOTES = [
   {
     id: 'blue',
     note: 'Can we try it in [blue]?',
-    hint: 'The blue is in the question. Drag it, ¿ubicás?',
+    hint: 'The blue is in the question. Drag it.',
     done: 'Blue. Specifically, Ademan blue.',
     mount(st, api) {
       const SW = ['#E5533D', C.green, C.pink, C.greenL, '#8E6CC2', C.ink];
@@ -176,7 +176,7 @@ export const NOTES = [
   {
     id: 'premium',
     note: 'Make it feel more premium.',
-    hint: 'Premium is mostly what you take away. And that font... ¿ubicás?',
+    hint: 'Premium is mostly what you take away. And that font.',
     done: 'Now it costs $90.',
     mount(st, api) {
       st.innerHTML = `<div class="n4-card">
@@ -211,8 +211,8 @@ export const NOTES = [
   {
     id: 'tweaks',
     note: 'Love it!! Just a few small tweaks.',
-    hint: 'Read the fine print, ¿ubicás?',
-    done: 'Per the contract. Invoice sent. Ahre.',
+    hint: 'Read the fine print.',
+    done: 'Per the contract. Invoice sent.',
     mount(st, api) {
       const asks = ['can the logo be 2% bigger', 'try it in blue again', 'my wife liked the old one', 'can it feel more Tuesday?', 'what if no logo', 'back to v3 actually', 'one last thing', 'can we see it in person'];
       let v = 12, k = 0;
@@ -230,7 +230,7 @@ export const NOTES = [
         req.textContent = `"${asks[k % asks.length]}"`;
         mk.style.transform = `scale(${0.85 + Math.random() * 0.3}) rotate(${(Math.random() - 0.5) * 30}deg)`;
         api.sfx(300 + (k % 5) * 40, 0.05);
-        if (k >= 5) api.nope(k >= 9 ? `v${v}. Ahre.` : 'This could go on forever. ¿Ubicás?');
+        if (k >= 5) api.nope(k >= 9 ? `v${v}.` : 'This could go on forever.');
       });
       st.querySelector('.t').addEventListener('click', () => {
         if (api.isDone()) return;
@@ -243,7 +243,7 @@ export const NOTES = [
   {
     id: 'kern',
     note: 'Can you kern this?',
-    hint: 'Same space between every letter. Drag them, ¿ubicás?',
+    hint: 'Same space between every letter. Drag them.',
     done: 'Optically perfect. Nobody will notice. You will.',
     mount(st, api) {
       st.innerHTML = `<div class="n6-row">${'KERN'.split('').map((ch) => `<span>${ch}</span>`).join('')}</div><p class="n6-tip">Drag the letters</p>`;
@@ -276,7 +276,7 @@ export const NOTES = [
   {
     id: 'viral',
     note: 'Make it go viral.',
-    hint: 'What does the internet always want? ¿Ubicás?',
+    hint: 'What does the internet always want?',
     done: '1.2M likes. Zero sales. Viral.',
     mount(st, api) {
       st.innerHTML = `<div class="n7-post">
@@ -319,7 +319,7 @@ export const NOTES = [
   {
     id: 'whiter',
     note: 'The white needs to be whiter.',
-    hint: "You can't change the white. Change what's around it, ¿ubicás?",
+    hint: "You can't change the white. Change what's around it.",
     done: 'Same white. Looks whiter. Design.',
     mount(st, api) {
       const steps = ['#f3f3f3', '#dddddd', '#ababab', '#5a5a5a', '#111111'];
@@ -344,8 +344,8 @@ export const NOTES = [
   {
     id: 'call',
     note: 'Quick call?',
-    hint: 'What time does the studio close? ¿Ubicás?',
-    done: '19:00. Out of office. Ahre.',
+    hint: 'What time does the studio close?',
+    done: '19:00. Out of office.',
     mount(st, api) {
       st.classList.add('dark');
       st.innerHTML = `<div class="n9-status"><button class="n9-time">18:59</button><span>5G ▮▮▮</span></div>
@@ -355,7 +355,7 @@ export const NOTES = [
       const dec = st.querySelector('.dec'), acc = st.querySelector('.acc');
       place(st, dec, 0.28, 0.8);
       place(st, acc, 0.72, 0.8);
-      const lines = ['Nice try.', 'The client always calls back.', 'Declining is not an option.', 'Answering is worse. ¿Ubicás?', 'It keeps ringing.'];
+      const lines = ['Nice try.', 'The client always calls back.', 'Declining is not an option.', 'Answering is worse.', 'It keeps ringing.'];
       const dodge = (e) => {
         e.preventDefault();
         if (api.isDone()) return;
@@ -381,7 +381,7 @@ export const NOTES = [
   {
     id: 'subtle',
     note: 'Make it pop. But subtle.',
-    hint: 'Subtle takes patience. Press and hold, ¿ubicás?',
+    hint: 'Subtle takes patience. Press and hold.',
     done: 'Popped, subtly. Approved on round one. This never happens.',
     mount(st, api) {
       st.innerHTML = `<div class="n-balloon n10">${balloonSvg}</div>`;
@@ -450,7 +450,7 @@ export function Feedback(root, ctx) {
         <div class="nprompt">${markup(n.note)}</div>
         <div class="nstage"></div>
         <div class="nmsg" aria-live="polite"></div>
-        <div class="nbtns"><button class="pill sm" data-act="hint">¿Ubicás?</button><button class="pill sm" data-act="reset">Start over</button></div>
+        <div class="nbtns"><button class="pill sm" data-act="hint">Hint</button><button class="pill sm" data-act="reset">Start over</button></div>
         <div class="nwin" hidden></div>
       </div>
     </div>`;
@@ -478,8 +478,8 @@ export function Feedback(root, ctx) {
         const now = ctx.solved();
         const next = cur + 1 < NOTES.length;
         setTimeout(() => {
-          win.innerHTML = `<b>Solved.</b><p>${n.done}</p>${first ? '<small>+10 mate, +$40 and +1 AHRE in Make It Pop</small>' : ''}
-            ${next ? '<button class="pill go" data-act="next">Next note</button>' : "<p class=\"fin\">That's every note. More when clients send more. Ahre.</p>"}`;
+          win.innerHTML = `<b>Solved.</b><p>${n.done}</p>${first ? '<small>+$40 in Make It Pop</small>' : ''}
+            ${next ? '<button class="pill go" data-act="next">Next note</button>' : "<p class=\"fin\">That's every note.</p>"}`;
           win.hidden = false;
           const gp = root.querySelector('.gpill');
           if (gp) gp.textContent = `${now.length}/${NOTES.length}`;
@@ -500,7 +500,7 @@ export function Feedback(root, ctx) {
     if (!a) return;
     const n = NOTES[cur];
     const msg = root.querySelector('.nmsg');
-    if (a.dataset.act === 'hint') { msg.textContent = `Daphi: ${n.hint}`; msg.className = 'nmsg hint'; }
+    if (a.dataset.act === 'hint') { msg.textContent = n.hint; msg.className = 'nmsg hint'; }
     if (a.dataset.act === 'reset') draw();
     if (a.dataset.act === 'next') { cur = Math.min(NOTES.length - 1, cur + 1); draw(); }
   });

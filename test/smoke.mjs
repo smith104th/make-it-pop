@@ -52,6 +52,19 @@ await shot('10-final-start');
 for (let k = 0; k < 60; k++) { await page.keyboard.press(['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowDown'][k % 4]); await page.waitForTimeout(25); }
 let ff = await page.evaluate(() => window.__ag.games.final.state);
 ok(ff.score > 0 && ff.tiles.length >= 2, `2048 merges and scores (${ff.score} points, ${ff.tiles.length} tiles)`);
+// a swipe that can't move anything does nothing: no shake, no new tile
+await page.evaluate(() => { localStorage.setItem('ag:final', JSON.stringify({ tiles: [{ v: 2, r: 0, c: 0 }, { v: 4, r: 0, c: 1 }], score: 0, best: 0 })); });
+await page.reload();
+await page.waitForTimeout(400);
+const t0 = JSON.stringify((await page.evaluate(() => window.__ag.games.final.state)).tiles);
+await page.keyboard.press('ArrowLeft');
+await page.keyboard.press('ArrowUp');
+await page.waitForTimeout(300);
+const t1 = JSON.stringify((await page.evaluate(() => window.__ag.games.final.state)).tiles);
+const shook = await page.evaluate(() => { const b = document.querySelector('.ffboard'); return b.classList.contains('bump') || getComputedStyle(b).animationName !== 'none'; });
+ok(t0 === t1 && !shook, 'a blocked swipe changes nothing and the board does not shake');
+for (let k = 0; k < 60; k++) { await page.keyboard.press(['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowDown'][k % 4]); await page.waitForTimeout(25); }
+ff = await page.evaluate(() => window.__ag.games.final.state);
 ok(ff.tiles.every((t) => t.v >= 2 && (t.v & (t.v - 1)) === 0), 'every tile is a power of two');
 const fb = await page.locator('.ffboard').boundingBox();
 const before = JSON.stringify(ff.tiles);
@@ -117,7 +130,7 @@ await page.mouse.move(bx, by); await page.mouse.down(); await page.waitForTimeou
 ok(await solved() === 10, 'note 10: hold for subtle');
 await page.waitForTimeout(700);
 await shot('21-feedback-done');
-ok((await ls('make-it-pop:v1')).mate > 30, 'Feedback pays out mate in Make It Pop');
+ok((await ls('make-it-pop:v1')).coins >= 400, 'Feedback pays $40 per puzzle into Make It Pop');
 await backToMenu();
 ok((await page.textContent('.band[data-g="feedback"] .band-pill')).trim() === 'Done', 'menu shows Feedback done');
 
@@ -186,8 +199,25 @@ for (let k = 0; k < 20; k++) { await page.click(cell(GEN), { force: true }); awa
 s = await S();
 ok(s.stats.spawns === 20 && Object.keys(s.stickies).length >= 1, `desk: briefs and stickies (${Object.keys(s.stickies).length})`);
 await shot('51-pop-desk');
-await page.click('#ahre', { force: true });
-ok(Object.keys((await S()).stickies).length === 0, 'desk: AHRE clears stickies');
+ok(!(await page.$('#ahre')) && !(await page.$('#mate')), 'desk: no AHRE or mate in the header');
+// a merge right next to a sticky resolves it
+const st0 = await S();
+const stuck = Object.keys(st0.stickies).map(Number);
+const nb = (i) => [i - 7, i + 7, i % 7 ? i - 1 : -1, i % 7 < 6 ? i + 1 : -1].filter((j) => j >= 0 && j < 49);
+let resolved = false;
+for (const t of stuck) {
+  for (const n of nb(t)) {
+    const it = st0.board[n];
+    if (!it || n === GEN || st0.stickies[n]) continue;
+    const mate = st0.board.findIndex((o, j) => o && j !== n && j !== GEN && !st0.stickies[j] && o.c === it.c && o.l === it.l);
+    if (mate < 0) continue;
+    await dragFrom(await center(cell(mate)), await center(cell(n)), 6);
+    resolved = !((await S()).stickies[t]) || (await S()).stickies[t].hp < st0.stickies[t].hp;
+    break;
+  }
+  if (resolved) break;
+}
+ok(resolved || stuck.length === 0, 'desk: merging next to a client note resolves it');
 await page.click('#pop-dock [data-t="studio"]');
 await shot('52-pop-studio');
 ok((await page.textContent('#pop-studio')).includes('10/10'), 'Studio counts Feedback solved');

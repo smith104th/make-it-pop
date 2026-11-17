@@ -15,12 +15,6 @@ const REQUESTS = [
   'business cards for the dog', 'a newsletter template', 'a pop-up store', 'uniforms?', 'a scent', 'tote bags',
   'a QR code, but nice', 'an AI version', 'the Christmas card', 'one more round', 'Spanish, Portuguese and French',
 ];
-const MILESTONES = {
-  10: 'Daphi: this was supposed to be a logo. Ahre.',
-  20: "Daphi: we're full-service now, ¿ubicás?",
-  30: "Daphi: I'm invoicing.",
-  45: 'Daphi: this is a retainer now. Ahre.',
-};
 
 export function Scope(root) {
   root.classList.add('sc');
@@ -154,7 +148,7 @@ export function Scope(root) {
       eaten++;
       absorbed.push(food.t);
       nEl.textContent = eaten;
-      say(MILESTONES[eaten] || `+ "${food.t}"`);
+      say(`+ "${food.t}"`);
       speed = Math.max(72, speed - 3);
       sfx(420 + Math.min(eaten, 30) * 12, 0.08);
       buzz(8);
@@ -166,7 +160,7 @@ export function Scope(root) {
       const cut = Math.min(3, snake.length - 3);
       if (cut > 0) snake.length -= cut;
       invoice = null;
-      say('Invoice paid. Scope trimmed. Ahre.');
+      say('Invoice paid. Scope trimmed.');
       sfx(880, 0.2);
       buzz(15);
     }
@@ -207,7 +201,7 @@ export function Scope(root) {
   }
   function ready(paused) {
     over.innerHTML = paused
-      ? '<b>Paused.</b><p>The client is still typing.</p><div class="sc-btns"><button class="pill go" data-a="resume">Keep going</button></div>'
+      ? '<b>Paused.</b><div class="sc-btns"><button class="pill go" data-a="resume">Keep going</button></div>'
       : `<b>Scope Creep</b><p>Eat every client request. Each one makes the project longer. Don't hit the deadline. Don't hit yourself. Invoices trim the scope.</p><div class="sc-btns"><button class="pill go" data-a="go">Start</button></div>`;
     over.hidden = false;
   }
@@ -215,7 +209,7 @@ export function Scope(root) {
     const a = e.target.closest('[data-a]')?.dataset.a;
     if (a === 'go') start();
     if (a === 'resume') { state = 'play'; over.hidden = true; timer = setTimeout(loop, 300); }
-    if (a === 'share') shareText(`My project grew to ${eaten} client requests before ${cause === 'wall' ? 'the deadline hit' : 'it collapsed'}. Scope Creep, a game by Ademan Studio.`, `${SITE}#scope`);
+    if (a === 'share') shareText(`Scope Creep: ${eaten} requests.`, `${SITE}#scope`);
   });
 
   function turn(d) {

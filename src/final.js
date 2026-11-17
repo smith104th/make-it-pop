@@ -19,13 +19,6 @@ const FILES = {
   8192: ['rebrand_FINAL', '#111111', '#fcd5bd'],
 };
 const file = (v) => FILES[v] || ['ok, new agency', '#111111', '#e2d286'];
-const LINES = {
-  128: 'FINAL_FINAL. We have all been here.',
-  256: 'FINAL_FINAL_v2. Ahre.',
-  512: 'USE_THIS. Obviously.',
-  1024: 'USE_THIS_ONE. One more and it ships. ¿Ubicás?',
-  4096: 'Approved, then the client wants a rebrand. Ahre.',
-};
 
 export function Final(root) {
   root.classList.add('ff');
@@ -172,7 +165,7 @@ export function Final(root) {
         moved = true;
       }
     }
-    if (!moved) { board.classList.remove('bump'); void board.offsetWidth; board.classList.add('bump'); return; }
+    if (!moved) return;
 
     // slide everything first, with merged tiles still showing their old file
     for (const t of tiles) place(tileEl(t), t);
@@ -188,14 +181,14 @@ export function Final(root) {
       const hi = Math.max(...merged.map((t) => t.v));
       sfx(300 + Math.log2(hi) * 45, 0.12);
       buzz(merged.length > 1 ? 14 : 8);
-      if (newTop && LINES[top]) msg.textContent = `Daphi: ${LINES[top]}`;
+      if (newTop && top >= 32) msg.textContent = `New best file: ${file(top)[0]}.pdf`;
     } else sfx(520, 0.03);
     if (!won && top >= 2048) {
       won = true;
-      setTimeout(() => showOver('Approved.', 'The client signed off on round one. Nobody believes you.', true), 350);
+      setTimeout(() => showOver('Approved.', `You got the file to Approved. Score ${score.toLocaleString('en-US')}.`, true), 350);
     } else if (!canMove()) {
       over = true;
-      setTimeout(() => showOver('Out of desk.', `Best file: ${file(bestTile)[0]}.pdf. Score ${score.toLocaleString('en-US')}.`, false), 350);
+      setTimeout(() => showOver('No moves left.', `Best file: ${file(bestTile)[0]}.pdf. Score ${score.toLocaleString('en-US')}.`, false), 350);
     }
     persist();
   }
@@ -209,11 +202,11 @@ export function Final(root) {
     const a = e.target.closest('[data-a]')?.dataset.a;
     if (a === 'keep') overEl.hidden = true;
     if (a === 'again') newGame();
-    if (a === 'share') shareText(`I got my file to ${file(bestTile)[0]}.pdf in Final Final (${score.toLocaleString('en-US')} points). A game by Ademan Studio.`, `${SITE}#final`);
+    if (a === 'share') shareText(`Final Final: ${file(bestTile)[0]}.pdf, ${score.toLocaleString('en-US')} points.`, `${SITE}#final`);
   });
   root.querySelector('.ffnew').addEventListener('click', () => {
     if (over || !tiles.length || score === 0) { newGame(); return; }
-    sheet({ title: 'New game?', body: '<p>This desk gets archived. Score and best file reset.</p>', actions: [{ label: 'Start over', primary: true, fn: newGame }, { label: 'Keep playing' }] });
+    sheet({ title: 'New game?', body: '<p>Score and best file reset.</p>', actions: [{ label: 'Start over', primary: true, fn: newGame }, { label: 'Keep playing' }] });
   });
 
   // swipe anywhere on the board; arrow keys and WASD on a keyboard
@@ -245,7 +238,7 @@ export function Final(root) {
     tiles = st.tiles.map((t) => ({ ...t, id: nextId++ }));
     score = st.score || 0; best = st.best || 0; won = !!st.won; over = !!st.over; bestTile = st.bestTile || 2;
     draw(true);
-    if (over) showOver('Out of desk.', `Best file: ${file(bestTile)[0]}.pdf. Score ${score.toLocaleString('en-US')}.`, false);
+    if (over) showOver('No moves left.', `Best file: ${file(bestTile)[0]}.pdf. Score ${score.toLocaleString('en-US')}.`, false);
   } else {
     best = st?.best || 0;
     newGame();

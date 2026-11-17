@@ -1,7 +1,7 @@
 {
   "name": "Ademan Games",
   "short_name": "Ademan Games",
-  "description": "Games for between calls, by Ademan Studio.",
+  "description": "Five small games by Ademan Studio.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

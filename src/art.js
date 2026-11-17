@@ -119,12 +119,6 @@ export const genHTML = (extra = '') =>
       t(24, 43, 7, 'BRIEF', { fill: '#fff', font: MONO, w: 400, ls: 0.6 }),
   )}</div>`;
 
-// A mate gourd with its bombilla. The studio runs on it.
-export const mateIcon = svg(
-  `<path d="M5 9h14c0 8-3 12-7 12S5 17 5 9z" fill="currentColor"/><path d="M6 9c1.4-2.4 3.6-3.4 6-3.4S16.6 6.6 18 9z" fill="${C.green}"/><path d="M14 8.5L17.5 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>`,
-  '0 0 24 24',
-);
-
 // Daphi: the mark with a face, phone in hand. Always on her phone.
 export const daphiSvg = svg(
   markPaths(20, 20, 18, C.blue, C.lblue) +
